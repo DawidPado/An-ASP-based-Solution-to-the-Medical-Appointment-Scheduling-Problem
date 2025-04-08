@@ -18,11 +18,11 @@ def collect_and_solve():
         facts_to_solve = facts
         current_timestamp = str(time.time())
         facts_to_solve += ['orario_corrente(' + current_timestamp + ').']
-
         collecting = False
         facts = []
 
     if facts_to_solve:
+        # query sul db per le info
         res = solver.solve(facts_to_solve)
         return res
 
