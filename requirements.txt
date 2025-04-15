@@ -1,3 +1,4 @@
 Flask
 clingo
 flask-jwt-extended
+mysql-connector-python
