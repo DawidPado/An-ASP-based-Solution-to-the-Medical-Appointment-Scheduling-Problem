@@ -17,7 +17,7 @@ def collect_and_solve():
     with lock:
         facts_to_solve = facts
         current_timestamp = str(time.time())
-        facts_to_solve += ['orario_corrente(' + current_timestamp + ').']
+        facts_to_solve += ['current_time(' + current_timestamp + ').']
         collecting = False
         facts = []
 
