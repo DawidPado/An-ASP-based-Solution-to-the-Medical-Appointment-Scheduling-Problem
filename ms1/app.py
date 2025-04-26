@@ -1,16 +1,18 @@
 from flask import Flask, request, jsonify
-import requests
+import requests, database, hashlib
 from datetime import timedelta
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
     jwt_required,
     get_jwt_identity,
+    get_jwt
 )
+from flask_cors import CORS
 
 
 app = Flask(__name__)
-
+CORS(app)  # permette CORS su tutte le rotte
 # Configura la chiave segreta per i token JWT
 app.config["JWT_SECRET_KEY"] = "p7mNJ7gNEX7HXGHdjcXFh7w3syh4dm&@"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
@@ -24,39 +26,60 @@ def index():
 # Simulazione di un database di utenti
 credentials = {"user": "admim", "password": "password123"}
 
-@app.route("/api/login", methods=["POST"])
-def login():
-    # Recupera le credenziali dal client
-    username = request.json.get("user")
-    password = request.json.get("password")
 
-    # Verifica le credenziali
-    if credentials["user"] == username and credentials["password"] == password:
-        # Crea un token di accesso
-        access_token = create_access_token(identity=username)
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = hashlib.sha256(data.get('password').encode('utf-8')).hexdigest()
+    print(email, password)
+    if not email or not password:
+        return jsonify({'msg': 'Email and password are required'}), 400
+    result = database.login(email, password)
+    if result:
+        access_token = create_access_token(identity=data["email"], additional_claims=result)
         return jsonify(access_token=access_token), 200
     else:
-        return jsonify({"msg": "Credenziali non valide"}), 401
+        return jsonify({"msg": "Credenziali non valide!"}), 401
 
-@app.route("/protected", methods=["GET"])
+
+@app.route("/api/signin", methods=["POST"])
+def signin():
+    data = request.get_json()
+    data["password"] = hashlib.sha256(data.get('password').encode('utf-8')).hexdigest()
+    result = database.signin(data)
+    if result:
+        access_token = create_access_token(identity=data["email"],  additional_claims=result)
+        return jsonify(access_token=access_token), 200
+
+
+    return jsonify({"msg": "Paziente esistente!"}), 400
+
+@app.route("/api/me", methods=["GET"])
 @jwt_required()
-def protected():
-    # Ottieni l'identità dell'utente dal token
-    current_user = get_jwt_identity()
-    return jsonify(logged_in_as=current_user), 200
+def me():
+    return jsonify(identity=get_jwt_identity(), claims = get_jwt()), 200
 
 
+def create_user_facts(data: dict)-> str:
+    facts = ""
+    facts+= f'paziente(p{str(data["id"])},"{str(data["nome"])}","{str(data["cognome"])}","{str(data["residenza"])}").\n'
+    return facts
 
 @app.route('/api/add_request', methods=['POST'])
 @jwt_required()
 def add_request():
-    current_user = get_jwt_identity()
     data = request.get_json()
-    response = requests.post('http://localhost:5001/solve', json=data)
+    if not data:
+        return jsonify({'msg': 'Invalid data'}), 400
+    data["paziente_id"] = get_jwt()["id"]
+
+    facts = create_user_facts(get_jwt())
+    response = requests.post('http://localhost:5001/solve', json={"facts": facts, "request": data})
     if response.status_code == 200:
         return response.json()
     else:
-        return {'message': 'Errore durante la creazione della richiesta'}, 500
+        return {'msg': 'Errore durante la creazione della richiesta'}, 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

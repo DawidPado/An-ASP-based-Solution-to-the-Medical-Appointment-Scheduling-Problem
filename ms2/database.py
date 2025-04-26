@@ -9,31 +9,17 @@ config = {
     'port': 3306
 }
 
-try:
-    connection = mysql.connector.connect(**config)
-    print("Connected to MySQL!")
+def get_pazienti_cliniche_visita(paziente_id,visita_id):
+    conn = mysql.connector.connect(**config)
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM main.view_pazienti_cliniche_visita WHERE paziente_id = %s and visita_id = %s", (paziente_id,visita_id))
+        clinics = cursor.fetchall()
+        return clinics
 
-    # Create a cursor and execute a query
-    cursor = connection.cursor()
-    query = "SELECT * FROM view_pazienti_cliniche"
-
-    # Execute the query
-    cursor.execute(query)
-
-    # Fetch all the results
-    results = cursor.fetchall()
-
-    # Process the results (printing here for simplicity)
-    for row in results:
-        paziente_id, paziente_nome, paziente_cognome, clinica_id, clinica_nome, distanza_km = row
-        print(f"Paziente: {paziente_nome} {paziente_cognome} (ID: {paziente_id}), "
-              f"Clinica: {clinica_nome} (ID: {clinica_id}), Distanza: {distanza_km} km")
-
-except mysql.connector.Error as err:
-    print("Error:", err)
-
-finally:
-    if connection.is_connected():
-        cursor.close()
-        connection.close()
-        print("Connection closed.")
+    except mysql.connector.Error as err:
+        pass
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
