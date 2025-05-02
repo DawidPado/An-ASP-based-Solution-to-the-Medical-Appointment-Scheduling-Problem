@@ -1,14 +1,16 @@
 import clingo
 
+def on_message(msg):
+    if msg.type != clingo.MessageType.Warning and msg.type != clingo.MessageType.Info:
+        print(msg)
+
 def solve(facts):
-    ctl = clingo.Control()
-    if facts == []:
+    ctl = clingo.Control(["--warn=none"])
+    if facts == "":
         return {"message": "No fact provided"}, 400
 
-    program = ""
-    for fact in facts:
-        program += f"{fact}\n"
-    program += """
+    program = facts
+    program += r"""
         sensory_penalty(Patient, Clinic, Time, Level) :- 
             patient(Patient,_,_,_), 
             clinic(Clinic,_), 
@@ -77,7 +79,7 @@ def solve(facts):
             clinic(Clinic, _), 
             TotalCost = #sum { Cost : appointment(Patient, Clinic, _, Visit, _),  
                                  visit_type(Visit, _, _, 1,_,_), 
-                                 costo_visit(Visit, Cost) }. 
+                                 cronic_visit_cost(Visit, Cost) }. 
         
         :- chronic_cost(Clinic, TotalCost), budget(Clinic, Budget), TotalCost > Budget. 
         
@@ -146,8 +148,8 @@ def solve(facts):
         
         % Funzione di minimizzazione 
         #minimize { 
-            (Distanza * 10000) + WaitTime + (Penalty * 1000) - (ClinicPreference * 1000) + (DoctorPreference * 1000) + (AppointmentPreference * 1000) :
-            distanza(Patient, Clinic, Distanza), 
+            (Distance * 10000) + WaitTime + (Penalty * 1000) - (ClinicPreference * 1000) + (DoctorPreference * 1000) + (AppointmentPreference * 1000) :
+            distance(Patient, Clinic, Distance), 
             appointment(Patient, Clinic, Doctor, _, Time), 
             current_time(CurrentTime), 
             WaitTime = Time - CurrentTime, 
@@ -158,7 +160,7 @@ def solve(facts):
         }. 
         #show appointment/5.
     """
-
+    print("program", program)
     ctl.add("base", [], program)
     ctl.ground([("base", [])])
     # Solve and print answer sets
@@ -167,7 +169,7 @@ def solve(facts):
         for model in handle:
             sol = str(model)
     if sol != "":
-
+        print("sol:\n\t", sol)
         return {"solution: " : sol.split(" ")}, 200
     else:
         return {"message": "No solution found"}, 200

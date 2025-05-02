@@ -5,48 +5,68 @@ app = Flask(__name__)
 
 lock = threading.Lock()
 info = []
-facts = []
+facts = ""
 collecting = False
 
 def create_facts(data: list) -> str:
-    budget = set()
-    clinics = set()
-    accessibile = set()
-    doctors = set()
-    tipo_di_visita = set()
-    costo_visita = set()
-    sedute_richieste = set()
-    intervallo_sedute = set()
-    disponibilita = set()
-    condizione_ambientale = set()
+    new_facts = dict()
+    new_facts["clinics"] = set()
+    new_facts["budget"] = set()
+    new_facts["accessibile"] = set()
+    new_facts["doctors"] = set()
+    new_facts["doctor_experience"] = set()
+    new_facts["visit_type"] = set()
+    new_facts["costo_visita"] = set()
+    new_facts["requested_sessions"] = set()
+    new_facts["intervallo_sedute"] = set()
+    new_facts["environmental_condition"] = set()
+    new_facts["cronic_visit_cost"] = set()
+    new_facts["distance"] = set()
+    new_facts["availability"] = set()
+    new_facts["session_interval"] = set()
 
-    x = [{'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 22, 'clinica_nome': 'Ospedale Santa Maria', 'distanza_km': 65.99}, {'paziente_id': 11, 'paziente_nome': 'Admin', 'pazient\
-    e_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 4, 'clinica_nome': 'Ospedale Renzetti', 'distanza_km': 82.84}, {'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 7, 'clin\
-    ica_nome': 'Ospedale San Camillo', 'distanza_km': 86.86}, {'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 15, 'clinica_nome': 'Ospedale Cristo Re', 'distanza_km': 92.88},
-     {'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 20, 'clinica_nome': 'Ospedale Belcolle', 'distanza_km': 108.76}, {'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_\
-    cognome': 'Admin', 'visita_id': 9, 'clinica_id': 21, 'clinica_nome': 'Azienda Ospedaliera di Perugia', 'distanza_km': 118.08}, {'paziente_id': 11, 'paziente_nome': 'Admin', 'paziente_cognome': 'Admin', 'visita_id': 9, 'clinica_id': 25, 'clinica_nome': 'Ospedale di Città di Castello', 'distanza_km': 155.14}]
-    facts = ""
+
     for item in data:
-        facts += f'clinica(c{str(item["clinica_id"])},"{str(item["clinica_nome"])}").\n'
-        facts += f'visita(v{str(item["visita_id"])}). \n'
-        facts += f'distanza(c{str(item["clinica_id"])},v{str(item["visita_id"])},{item["distanza_km"]}).\n'
+        new_facts["clinics"].add(f'\tclinic(c{str(item["clinic_id"])},"{item["clinic_name"]}").\n')
+        new_facts["budget"].add(f'\tbudget(c{str(item["clinic_id"])},{str(int(item["clinic_budget"]))}).\n')
+        new_facts["requested_sessions"].add(f'\trequested_sessions(v{str(item["visit_id"])}, {str(item["visit_sessions_requests"])}).\n')
+        new_facts["visit_type"].add(f'\tvisit_type(v{str(item["visit_id"])}, "{str(item["visit_type"])}", "{str(item["visit_name"])}", {str(item["visit_is_chronic"])}, {str(item["visit_on_site"])}, {str(item["visit_in_presence"])}).\n')
+        new_facts["distance"].add(f'\tdistance(p{str(item["patient_id"])}, c{str(item["clinic_id"])}, {str(int(item["distance_km"]))}).\n')
+        new_facts["availability"].add(f'\tavailability(c{str(item["clinic_id"])} ,d{str(item["doctor_id"])}, v{str(item["visit_id"])}, {str(int(item["visit_schedule"]))}).\n')
+        new_facts["doctors"].add(f'\tdoctor(d{str(item["doctor_id"])}, "{item["doctor_name"]}", "{item["doctor_surname"]}", {str(item["doctor_age"])}, "{item["doctor_residence"]}", "{item["doctor_specialization"]}").\n')
+        new_facts["doctor_experience"].add(f'\tdoctor_experience(d{str(item["doctor_id"])}, "{item["doctor_exceprience_type"]}", {str(int(item["years_of_experience"]))}).\n')
+        new_facts["environmental_condition"].add(f'\tenvironmental_condition(c{str(item["clinic_id"])}, "{item["environmental_condition_type"]}", {str(int(item["environmental_condition_level"]))}, {str(int(item["condition_start"]))}, {str(int(item["condition_end"]))}).\n')
+        new_facts["session_interval"].add(f'\tsession_interval(v{str(item["visit_id"])}, {str(int(item["visit_min_session_interval"]))}, {str(int(item["visit_max_session_interval"]))}).\n')
+
+        if item["clinic_accessibility"] == 1:
+            new_facts["accessibile"].add(f'\taccessibile(c{str(item["clinic_id"])}).\n')
+        if item["visit_cronic"] == 1:
+            new_facts["cronic_visit_cost"].add(f'\tcronic_visit_cost(v{str(item["visit_id"])}, {str(int(item["visit_cost"]))}).\n')
+
+    result = ""
+    for key, values in new_facts.items():
+        for value in values:
+            result += value
+
+    return result
+
 def collect_and_solve():
     global facts, collecting, info
 
     collecting = True
-    time.sleep(60)
+    time.sleep(10)
 
     with lock:
         facts_to_solve = facts
-        current_timestamp = str(time.time())
-        facts_to_solve += ['current_time(' + current_timestamp + ').']
+        current_timestamp = str(int(time.time()))
+        facts_to_solve += 'current_time(' + current_timestamp + ').\n'
         raw_facts = info
         collecting = False
-        facts = []
+        facts = ""
         info = []
 
     if facts_to_solve:
-        facts_to_solve += create_facts(raw_facts)
+        facts_to_solve+=create_facts(raw_facts)
         res = solver.solve(facts_to_solve)
         return res
 
@@ -65,15 +85,21 @@ def solve():
         if not collecting:
             threading.Thread(target=collect_and_solve).start()
         facts += new_facts
-        info += database.get_pazienti_cliniche_visita(data["request"]["paziente_id"], data["request"]["visita_id"])
-        print("info", info)
+        info += database.get_pazienti_cliniche_visita(data["request"]["patient_id"], data["request"]["visit_id"])
     return jsonify({"message": "fact added"}), 200
-# {
-#   "status": "200 OK",
-#   "message": "Richiesta ricevuta. Elaborazione in corso."
-# }
+@app.route('/remove_apointment', methods=['POST'])
+def remove_apointment():
 
+    data = request.get_json()
+    global collecting, facts, info
+    appointment_id = data.get('appointment_id', None)
 
+    with lock:
+        collecting = False
+        facts = []
+        info = []
+
+    return jsonify({"message": "fact removed"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

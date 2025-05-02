@@ -61,9 +61,75 @@ def me():
     return jsonify(identity=get_jwt_identity(), claims = get_jwt()), 200
 
 
-def create_user_facts(data: dict)-> str:
-    facts = ""
-    facts+= f'paziente(p{str(data["id"])},"{str(data["nome"])}","{str(data["cognome"])}","{str(data["residenza"])}").\n'
+def create_initial_facts(data: dict)-> str:
+    {
+        "visit_id": 9,
+        "clinic_preference": 1,
+        "doctor_preference": 2,
+        "motor_difficulties": true,
+        "urgency": 3,
+        "interval_preference": {
+            "min": 1,
+            "max": 90
+        },
+        "sensory_preferences": [
+            "noise",
+            "luminosity"
+        ],
+        "appointment_preferences": [
+            {
+                "clinic": 1,
+                "start": 1850,
+                "end": 2000
+            }
+        ],
+        "generic_doctor_preferences": [
+            {
+                "doctor_type": "abc",
+                "specialization": "abc",
+                "experience": 0
+            },
+            {
+                "doctor_type": "abc",
+                "specialization": "xx",
+                "experience": 25
+            }
+        ]
+    }
+
+
+    facts = "\n"
+    facts += f'\tpatient(p{str(data["id"])},"{str(data["name"])}","{str(data["surname"])}","{str(data["residence"])}").\n'
+    facts += f'\tneeds(p{str(data["id"])},v{str(data["visit_id"])},{str(data["urgency"])}).\n'
+
+    if "interval_preference" in data.keys():
+        MinP = str(data["interval_preference"]["min"])
+        MaxP = str(data["interval_preference"]["max"])
+        facts += f'\tpatient_interval(p{str(data["id"])}, v{str(data["visit_id"])}, {MinP}, {MaxP}).\n'
+
+    if "doctor_preference" in data.keys():
+        facts += f'\tdoctor_preference_effect(p{str(data["id"])}, d{str(data["doctor_preference"])}, 1).\n'
+
+    if "clinic_preference" in data.keys():
+        facts += f'\tpreference(p{str(data["id"])}, c{str(data["clinic_preference"])}).\n'
+
+    if "generic_doctor_preferences" in data.keys():
+        for preferenza in data["generic_doctor_preferences"]:
+            facts += f'\tdoctor_preference(p{str(data["id"])}, "{(preferenza["doctor_type"])}", "{(preferenza["specialization"])}", {str(preferenza["experience"])}).\n'
+
+    if "sensory_preferences" in data.keys():
+        for preference in data["sensory_preferences"]:
+            facts += f'\tsensory_preference(p{str(data["id"])}, "{preference}").\n'
+
+    if "motor_difficulties" in data.keys():
+        if data["motor_difficulties"]:
+            facts += f'\tdisabled(p{str(data["id"])}).\n'
+
+    if "appointment_preferences" in data.keys():
+        for appointment_preferences in data["appointment_preferences"]:
+            facts += f'\tappointment_preferences(p{str(data["id"])}, "{(appointment_preferences["doctor_type"])}", "{(appointment_preferences["specialization"])}", {str(appointment_preferences["experience"])}).\n'
+
+    print("starting facts", facts)
     return facts
 
 @app.route('/api/add_request', methods=['POST'])
@@ -74,7 +140,11 @@ def add_request():
         return jsonify({'msg': 'Invalid data'}), 400
     data["paziente_id"] = get_jwt()["id"]
 
-    facts = create_user_facts(get_jwt())
+    facts = create_initial_facts(get_jwt() | data)
+    data = {
+        "paziente_id": data["paziente_id"],
+        "visita_id": data["visita_id"]
+    }
     response = requests.post('http://localhost:5001/solve', json={"facts": facts, "request": data})
     if response.status_code == 200:
         return response.json()

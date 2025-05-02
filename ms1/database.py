@@ -26,25 +26,41 @@ def login(email, password):
 
 def signin(data):
     response = False
-    keys = ["nome", "cognome", "residenza", "nascita","email", "password", "condizione", "difficolta", "obiettivi", "tecnologie", "ambiente", "latitudine", "longitudine"]
+    {
+        "name": "Admin",
+        "surname": "Admin",
+        "residence": "L'Aquila",
+        "birth": "1980-03-12",
+        "email": "admin@email.com",
+        "password": "password123",
+        "condition": "Hypertension",
+        "difficulties": "Difficulty walking",
+        "goals": "Prevention",
+        "technologies": "Telemedicine",
+        "environment": "Lives with wife",
+        "latitude": 42.3492,
+        "longitude": 13.3984
+    }
+
+    keys = ["name", "surname", "residence", "birth", "email","password", "condition", "difficulties", "goals", "technologies", "environment", "latitude", "longitude"]
     for key in keys:
         if key not in data.keys():
             raise ValueError(f"Missing required parameter: {key}")
     try:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor(dictionary=True)
-        result = cursor.callproc('registrazione_paziente', [
-            data["nome"],
-            data["cognome"],
-            data["residenza"],
-            data["nascita"],
+        result = cursor.callproc('register_patient', [
+            data["name"],
+            data["surname"],
+            data["residence"],
+            data["birth"],
             data["email"],
             data["password"],
-            data["condizione"],
-            data["difficolta"],
-            data["obiettivi"],
-            data["tecnologie"],
-            data["ambiente"],
+            data["condition"],
+            data["difficulties"],
+            data["goals"],
+            data["technologies"],
+            data["environment"],
             data["latitudine"],
             data["longitudine"],
             0
@@ -52,12 +68,8 @@ def signin(data):
         conn.commit()
         cursor.close()
         conn.close()
-
-        output = result['registrazione_paziente_arg14']
-        print(result)
-        print(output)
+        output = result['register_patient_arg14']
         if output == 1:
-            print("Registrazione avvenuta con successo!")
             return login(data["email"], data["password"])
         else:
             return None
