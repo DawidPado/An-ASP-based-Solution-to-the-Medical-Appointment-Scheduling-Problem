@@ -16,7 +16,6 @@ def create_facts(data: list) -> str:
     new_facts["doctors"] = set()
     new_facts["doctor_experience"] = set()
     new_facts["visit_type"] = set()
-    new_facts["costo_visita"] = set()
     new_facts["requested_sessions"] = set()
     new_facts["intervallo_sedute"] = set()
     new_facts["environmental_condition"] = set()
@@ -40,8 +39,8 @@ def create_facts(data: list) -> str:
 
         if item["clinic_accessibility"] == 1:
             new_facts["accessibile"].add(f'\taccessibile(c{str(item["clinic_id"])}).\n')
-        if item["visit_cronic"] == 1:
-            new_facts["cronic_visit_cost"].add(f'\tcronic_visit_cost(v{str(item["visit_id"])}, {str(int(item["visit_cost"]))}).\n')
+        if item["visit_is_chronic"] == 1:
+            new_facts["chronic_visit_cost"].add(f'\tchronic_visit_cost(v{str(item["visit_id"])}, {str(int(item["visit_cost"]))}).\n')
 
     result = ""
     for key, values in new_facts.items():
