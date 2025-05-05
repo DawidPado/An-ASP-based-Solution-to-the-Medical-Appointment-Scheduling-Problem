@@ -67,10 +67,10 @@ def create_initial_facts(data: dict)-> str:
         MaxP = str(data["interval_preference"]["max"])
         facts += f'\tpatient_interval(p{str(data["id"])}, v{str(data["visit_id"])}, {MinP}, {MaxP}).\n'
 
-    if "doctor_preference" in data.keys():
+    if "doctor_id_preference" in data.keys():
         facts += f'\tdoctor_preference_effect(p{str(data["id"])}, d{str(data["doctor_preference"])}, 1).\n'
 
-    if "clinic_preference" in data.keys():
+    if "clinic_id_preference" in data.keys():
         facts += f'\tpreference(p{str(data["id"])}, c{str(data["clinic_preference"])}).\n'
 
     if "generic_doctor_preferences" in data.keys():
@@ -87,7 +87,7 @@ def create_initial_facts(data: dict)-> str:
 
     if "appointment_preferences" in data.keys():
         for appointment_preferences in data["appointment_preferences"]:
-            facts += f'\tappointment_preferences(p{str(data["id"])}, "{(appointment_preferences["doctor_type"])}", "{(appointment_preferences["specialization"])}", {str(appointment_preferences["experience"])}).\n'
+            facts += f'\tappointment_preferences(p{str(data["id"])}, "c{(appointment_preferences["clinic_id"])}", {(appointment_preferences["start"])}, {str(appointment_preferences["end"])}).\n'
 
     print("starting facts", facts)
     return facts
