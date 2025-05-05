@@ -23,10 +23,6 @@ jwt = JWTManager(app)
 def index():
     return "Sistema di gestione degli appuntamenti con Flask e ASP!"
 
-# Simulazione di un database di utenti
-credentials = {"user": "admim", "password": "password123"}
-
-
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -41,7 +37,6 @@ def login():
         return jsonify(access_token=access_token), 200
     else:
         return jsonify({"msg": "Credenziali non valide!"}), 401
-
 
 @app.route("/api/signin", methods=["POST"])
 def signin():
@@ -62,41 +57,6 @@ def me():
 
 
 def create_initial_facts(data: dict)-> str:
-    {
-        "visit_id": 9,
-        "clinic_preference": 1,
-        "doctor_preference": 2,
-        "motor_difficulties": true,
-        "urgency": 3,
-        "interval_preference": {
-            "min": 1,
-            "max": 90
-        },
-        "sensory_preferences": [
-            "noise",
-            "luminosity"
-        ],
-        "appointment_preferences": [
-            {
-                "clinic": 1,
-                "start": 1850,
-                "end": 2000
-            }
-        ],
-        "generic_doctor_preferences": [
-            {
-                "doctor_type": "abc",
-                "specialization": "abc",
-                "experience": 0
-            },
-            {
-                "doctor_type": "abc",
-                "specialization": "xx",
-                "experience": 25
-            }
-        ]
-    }
-
 
     facts = "\n"
     facts += f'\tpatient(p{str(data["id"])},"{str(data["name"])}","{str(data["surname"])}","{str(data["residence"])}").\n'
@@ -132,24 +92,36 @@ def create_initial_facts(data: dict)-> str:
     print("starting facts", facts)
     return facts
 
-@app.route('/api/add_request', methods=['POST'])
+@app.route('/api/create_appointment', methods=['POST'])
 @jwt_required()
 def add_request():
     data = request.get_json()
     if not data:
         return jsonify({'msg': 'Invalid data'}), 400
-    data["paziente_id"] = get_jwt()["id"]
+    data["patient_id"] = get_jwt()["id"]
 
     facts = create_initial_facts(get_jwt() | data)
     data = {
-        "paziente_id": data["paziente_id"],
-        "visita_id": data["visita_id"]
+        "patient_id": data["patient_id"],
+        "visit_id": data["visit_id"]
     }
-    response = requests.post('http://localhost:5001/solve', json={"facts": facts, "request": data})
+    response = requests.post('http://localhost:5001/api/solve', json={"facts": facts, "request": data})
     if response.status_code == 200:
         return response.json()
     else:
-        return {'msg': 'Errore durante la creazione della richiesta'}, 500
+        return {'msg': 'Error creating request'}, 500
+
+@app.route('/api/remove_appointment', methods=['POST'])
+@jwt_required()
+def remove_appointment():
+    data = request.get_json()
+    if not data:
+        return jsonify({'msg': 'Invalid data'}), 400
+    appointment_id = data.get('appointment_id')
+    if not appointment_id:
+        return jsonify({'msg': 'Appointment ID is required'}), 400
+    response = requests.post('http://localhost:5001/api/remove_appointmet', json={"appointment_id": appointment_id})
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

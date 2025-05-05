@@ -8,6 +8,21 @@ info = []
 facts = ""
 collecting = False
 
+def parse_solution(solution: str) -> list:
+    appointments = []
+    for s in solution:
+        if s.startswith("appointment"):
+            parts = s.split(",")
+            appointment = {
+                "patient": int(parts[1].split("(")[1]),
+                "clinic": int(parts[2]),
+                "doctor": int(parts[3]),
+                "visit": int(parts[4]),
+                "time": int(parts[5].split(")")[0])
+            }
+            appointments.append(appointment)
+    return appointments
+
 def create_facts(data: list) -> str:
     new_facts = dict()
     new_facts["clinics"] = set()
@@ -51,52 +66,49 @@ def create_facts(data: list) -> str:
 
 def collect_and_solve():
     global facts, collecting, info
-
     collecting = True
-    time.sleep(10)
-
+    time.sleep(60)
     with lock:
         facts_to_solve = facts
         current_timestamp = str(int(time.time()))
         facts_to_solve += 'current_time(' + current_timestamp + ').\n'
-        raw_facts = info
+        raw_facts = []
+        for data in info:
+            raw_facts.append(database.next_upcoming_appointments(data["request"]["patient_id"], data["request"]["visit_id"]))
         collecting = False
         facts = ""
         info = []
-
     if facts_to_solve:
         facts_to_solve+=create_facts(raw_facts)
         res = solver.solve(facts_to_solve)
+        if "solution" in res.keys():
+            solution = parse_solution(res["solution"])
+            database.insert_appointments(solution)
         return res
 
 
 
-@app.route('/solve', methods=['POST'])
+@app.route('/api/solve', methods=['POST'])
 def solve():
     global collecting, facts, info
-
     data = request.get_json()
     new_facts = data.get('facts', None)
     if new_facts is None:
         return jsonify({"error": "No fact provided"}), 400
-
     with lock:
         if not collecting:
             threading.Thread(target=collect_and_solve).start()
         facts += new_facts
-        info += database.get_pazienti_cliniche_visita(data["request"]["patient_id"], data["request"]["visit_id"])
+        info.append(data)
     return jsonify({"message": "fact added"}), 200
 @app.route('/remove_apointment', methods=['POST'])
+
 def remove_apointment():
-
     data = request.get_json()
-    global collecting, facts, info
     appointment_id = data.get('appointment_id', None)
-
-    with lock:
-        collecting = False
-        facts = []
-        info = []
+    if appointment_id is None:
+        return jsonify({"error": "No appointment ID provided"}), 400
+    database.remove_appointment(appointment_id)
 
     return jsonify({"message": "fact removed"}), 200
 
