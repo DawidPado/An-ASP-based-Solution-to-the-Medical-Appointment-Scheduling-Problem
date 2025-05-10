@@ -1,8 +1,11 @@
 import clingo
+import time
+
 
 def on_message(msg):
-    if msg.type != clingo.MessageType.Warning and msg.type != clingo.MessageType.Info:
-        print(msg)
+    print(msg)
+    # if msg.type != clingo.MessageType.Warning and msg.type != clingo.MessageType.Info:
+    #     print(msg)
 
 def solve(facts):
     ctl = clingo.Control(["--warn=none"])
@@ -161,6 +164,7 @@ def solve(facts):
         #show appointment/5.
     """
     print("program", program)
+    start = time.time()
     ctl.add("base", [], program)
     ctl.ground([("base", [])])
     # Solve and print answer sets
@@ -168,6 +172,9 @@ def solve(facts):
     with ctl.solve(yield_=True) as handle:
         for model in handle:
             sol = str(model)
+
+    end = time.time()
+    print(f"Tempo di esecuzione: {end - start:.4f} secondi")
     if sol != "":
         print("sol:\n\t", sol)
         return {"solution: " : sol.split(" ")}, 200

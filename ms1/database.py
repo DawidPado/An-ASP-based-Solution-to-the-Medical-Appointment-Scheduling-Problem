@@ -23,25 +23,23 @@ def login(email, password):
         if conn.is_connected():
             cursor.close()
             conn.close()
+def get_appointments(patient_id):
+    conn = mysql.connector.connect(**config)
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM main.appointments WHERE patient_id = %s", (patient_id,))
+        appointments = cursor.fetchall()
+        return appointments
+
+    except mysql.connector.Error as err:
+        pass
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
 
 def signin(data):
     response = False
-    {
-        "name": "Admin",
-        "surname": "Admin",
-        "residence": "L'Aquila",
-        "birth": "1980-03-12",
-        "email": "admin@email.com",
-        "password": "password123",
-        "condition": "Hypertension",
-        "difficulties": "Difficulty walking",
-        "goals": "Prevention",
-        "technologies": "Telemedicine",
-        "environment": "Lives with wife",
-        "latitude": 42.3492,
-        "longitude": 13.3984
-    }
-
     keys = ["name", "surname", "residence", "birth", "email","password", "condition", "difficulties", "goals", "technologies", "environment", "latitude", "longitude"]
     for key in keys:
         if key not in data.keys():

@@ -68,10 +68,10 @@ def create_initial_facts(data: dict)-> str:
         facts += f'\tpatient_interval(p{str(data["id"])}, v{str(data["visit_id"])}, {MinP}, {MaxP}).\n'
 
     if "doctor_id_preference" in data.keys():
-        facts += f'\tdoctor_preference_effect(p{str(data["id"])}, d{str(data["doctor_preference"])}, 1).\n'
+        facts += f'\tdoctor_preference_effect(p{str(data["id"])}, d{str(data["doctor_id_preference"])}, 1).\n'
 
     if "clinic_id_preference" in data.keys():
-        facts += f'\tpreference(p{str(data["id"])}, c{str(data["clinic_preference"])}).\n'
+        facts += f'\tpreference(p{str(data["id"])}, c{str(data["clinic_id_preference"])}).\n'
 
     if "generic_doctor_preferences" in data.keys():
         for preferenza in data["generic_doctor_preferences"]:
@@ -122,6 +122,13 @@ def remove_appointment():
         return jsonify({'msg': 'Appointment ID is required'}), 400
     response = requests.post('http://localhost:5001/api/remove_appointmet', json={"appointment_id": appointment_id})
     return response
+
+@app.route('/api/appointments', methods=['GET'])
+@jwt_required()
+def get_appointments():
+    patient_id = get_jwt()["id"]
+    response = database.get_appointments(patient_id)
+    return response.json()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
