@@ -204,17 +204,11 @@ def random_timestamp(timestamps):
 
 while True:
     num_of_patients = int(input("Inserisci in numero dei pazienti: "))
-    ###### num of visits = 1
-    # num_of_clinics = int(num_of_patients/100) + 1
-    # num_of_doctors = int(num_of_patients/10) + 1
-    # num_of_visit = 1
-    # num_of_appointments = num_of_patients*num_of_clinics
 
-    ##### num of visits = 2
-    num_of_clinics = int(num_of_patients/10) + 1
+    num_of_visit = [1,2,num_of_patients][2]
+    num_of_clinics = int(num_of_patients/100) + 1
     num_of_doctors = int(num_of_patients/10) + 1
-    num_of_visit = num_of_patients
-    num_of_appointments = (num_of_patients*num_of_clinics)
+    num_of_availabilities  = (num_of_patients*num_of_clinics)
 
     patients = ""
     for p in range(num_of_patients):

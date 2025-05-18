@@ -82,7 +82,7 @@ def solve(facts):
             clinic(Clinic, _), 
             TotalCost = #sum { Cost : appointment(Patient, Clinic, _, Visit, _),  
                                  visit_type(Visit, _, _, 1,_,_), 
-                                 chronic_visit_cost(Visit, Cost) }. 
+                                 visit_cost(Visit, Cost) }. 
         
         :- chronic_cost(Clinic, TotalCost), budget(Clinic, Budget), TotalCost > Budget. 
         

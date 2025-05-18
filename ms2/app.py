@@ -38,6 +38,7 @@ def create_facts(data: list) -> str:
     new_facts["distance"] = set()
     new_facts["availability"] = set()
     new_facts["session_interval"] = set()
+    new_facts["visit_cost"] = set()
 
 
     for item in data:
@@ -51,11 +52,11 @@ def create_facts(data: list) -> str:
         new_facts["doctor_experience"].add(f'\tdoctor_experience(d{str(item["doctor_id"])}, "{item["doctor_exceprience_type"]}", {str(int(item["years_of_experience"]))}).\n')
         new_facts["environmental_condition"].add(f'\tenvironmental_condition(c{str(item["clinic_id"])}, "{item["environmental_condition_type"]}", {str(int(item["environmental_condition_level"]))}, {str(int(item["condition_start"]))}, {str(int(item["condition_end"]))}).\n')
         new_facts["session_interval"].add(f'\tsession_interval(v{str(item["visit_id"])}, {str(int(item["visit_min_session_interval"]))}, {str(int(item["visit_max_session_interval"]))}).\n')
-
+        new_facts["visit_cost"].add(f'\tvisit_cost(v{str(item["visit_id"])}, {str(int(item["visit_cost"]))}).\n')
         if item["clinic_accessibility"] == 1:
             new_facts["accessibile"].add(f'\taccessibile(c{str(item["clinic_id"])}).\n')
-        if item["visit_is_chronic"] == 1:
-            new_facts["chronic_visit_cost"].add(f'\tchronic_visit_cost(v{str(item["visit_id"])}, {str(int(item["visit_cost"]))}).\n')
+
+
 
     result = ""
     for key, values in new_facts.items():
@@ -100,7 +101,7 @@ def solve():
             threading.Thread(target=collect_and_solve).start()
         facts += new_facts
         info.append(data)
-    return jsonify({"message": "fact added"}), 200
+    return jsonify({"message": "request in progress"}), 200
 @app.route('/remove_apointment', methods=['POST'])
 
 def remove_apointment():
@@ -110,7 +111,7 @@ def remove_apointment():
         return jsonify({"error": "No appointment ID provided"}), 400
     database.remove_appointment(appointment_id)
 
-    return jsonify({"message": "fact removed"}), 200
+    return jsonify({"message": "appointment removed"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

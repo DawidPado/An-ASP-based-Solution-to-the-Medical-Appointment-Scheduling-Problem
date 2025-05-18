@@ -13,7 +13,7 @@ def login(email, password):
     conn = mysql.connector.connect(**config)
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT u.* FROM credenziali c inner join pazienti u on c.pazienti_id = u.id WHERE email = %s and password = %s", (email,password))
+        cursor.execute("SELECT u.* FROM credentials c inner join patients u on c.patient_id = u.id WHERE email = %s and password = %s", (email,password))
         user = cursor.fetchone()
         return user
 
@@ -59,8 +59,8 @@ def signin(data):
             data["goals"],
             data["technologies"],
             data["environment"],
-            data["latitudine"],
-            data["longitudine"],
+            data["latitude"],
+            data["longitude"],
             0
         ])
         conn.commit()
